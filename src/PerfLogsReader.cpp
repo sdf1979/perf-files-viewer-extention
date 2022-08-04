@@ -188,7 +188,13 @@ string PerfLogsReader::executeCommandGetValues(boost::json::object* j_cmd) {
         j_counter_stat.emplace("max", it->max_value_);
         j_counter_stat.emplace("sum", it->sum_value_);
         j_counter_stat.emplace("count", it->count_value_);
-        j_counter_stat.emplace("avg", it->sum_value_ / it->count_value_);
+        if (it->count_value_) {
+            double avg = it->sum_value_ / it->count_value_;
+            j_counter_stat.emplace("avg", avg);
+        }
+        else {
+            j_counter_stat.emplace("avg", 0);
+        }
         j_counters_stat.push_back(j_counter_stat);
     }
 

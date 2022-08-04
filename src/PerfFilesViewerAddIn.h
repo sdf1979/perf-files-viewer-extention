@@ -25,7 +25,7 @@
 
 class PerfFilesViewerAddIn final : public Component {
 public:
-    const char *Version = u8"1.0.0";
+    const char *Version = u8"1.0.1";
     PerfFilesViewerAddIn();
 private:
     std::string extensionName() override;
