@@ -184,16 +184,20 @@ string PerfLogsReader::executeCommandGetValues(boost::json::object* j_cmd) {
 
     json::array j_counters_stat;
     for (auto it = counters_.begin(); it < counters_.end(); ++it) {
+
         json::object j_counter_stat;
-        j_counter_stat.emplace("max", it->max_value_);
-        j_counter_stat.emplace("sum", it->sum_value_);
-        j_counter_stat.emplace("count", it->count_value_);
+        if (it->max_value_) { j_counter_stat.emplace("max", *it->max_value_); }
+        else { j_counter_stat.emplace("max", nullptr); }
+        if (it->sum_value_) { j_counter_stat.emplace("sum", *it->sum_value_); }
+        else { j_counter_stat.emplace("sum", nullptr); }
         if (it->count_value_) {
-            double avg = it->sum_value_ / it->count_value_;
+            j_counter_stat.emplace("count", *it->count_value_);
+            double avg = *it->sum_value_ / *it->count_value_;
             j_counter_stat.emplace("avg", avg);
         }
         else {
-            j_counter_stat.emplace("avg", 0);
+            j_counter_stat.emplace("count", nullptr);
+            j_counter_stat.emplace("avg", nullptr);
         }
         j_counters_stat.push_back(j_counter_stat);
     }
@@ -203,7 +207,8 @@ string PerfLogsReader::executeCommandGetValues(boost::json::object* j_cmd) {
     for (auto it_sample = samples.begin(); it_sample < samples.end(); ++it_sample) {
         json::array j_values;
         for (size_t index = 0; index < it_sample->values_.size(); ++index) {
-            j_values.push_back(it_sample->values_[index]);
+            if (it_sample->values_[index]) { j_values.push_back(*it_sample->values_[index]); }
+            else { j_values.push_back(nullptr); }
         }
         j_samples.push_back(j_values);
         j_points.push_back(systemtimeToJson(it_sample->point_time_).c_str());
@@ -392,14 +397,24 @@ vector<Sample> PerfLogsReader::getValues(const SYSTEMTIME& startTime, const SYST
                                 size_t index = (fileTimeToLongLong(pValue.TimeStamp) - uStartTime) / distance;
                                 if (index >= points) index = points - 1;
                                 Sample& sample = samples[index];
-                                if (fmtValue.doubleValue > sample.values_[i]) {
+                                if (!sample.values_[i] || fmtValue.doubleValue > *sample.values_[i]) {
                                     sample.values_[i] = fmtValue.doubleValue;
                                 }
-                                if (fmtValue.doubleValue > counter.max_value_) {
+                                if (!counter.max_value_ || fmtValue.doubleValue > *counter.max_value_) {
                                     counter.max_value_ = fmtValue.doubleValue;
                                 }
-                                counter.sum_value_ += fmtValue.doubleValue;
-                                ++counter.count_value_;
+                                if (!counter.sum_value_) {
+                                    counter.sum_value_ = fmtValue.doubleValue;
+                                }
+                                else {
+                                    counter.sum_value_ = *counter.sum_value_ + fmtValue.doubleValue;
+                                }
+                                if (!counter.count_value_) {
+                                    counter.count_value_ = 1;
+                                }
+                                else {
+                                    counter.count_value_ = *counter.count_value_ + 1;
+                                }
                             }
                         }
                         counter.prevCounter_ = pValue;

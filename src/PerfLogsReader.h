@@ -7,6 +7,7 @@
 #include <Pdh.h>
 #include <PdhMsg.h>
 #include <unordered_map>
+#include <optional>
 
 #include "boost/json.hpp"
 
@@ -70,16 +71,16 @@ struct Counter {
 
 	HCOUNTER hCounter_;
 	_PDH_RAW_COUNTER prevCounter_ = { PDH_CSTATUS_ITEM_NOT_VALIDATED , 0, 0, 0, 0 };
-	double max_value_ = 0;
-	double sum_value_ = 0;
-	std::size_t count_value_ = 0;
+	std::optional<double> max_value_;
+	std::optional<double> sum_value_;
+	std::optional<std::size_t> count_value_;
 };
 
 struct Sample {
 	uint64_t start_period_;
 	uint64_t end_period_;
 	SYSTEMTIME point_time_;
-	std::vector<double> values_;
+	std::vector<std::optional<double>> values_;
 };
 
 class PerfLogsReader {
